@@ -65,8 +65,9 @@ fn back_propagation(
     weight_gradients: &mut Vec<Array<f64, Dim<[usize; 2]>>>,
     bias_gradients: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
     layers: &Vec<Array<f64, Dim<[usize; 1]>>>,
-    desired_output: &Array<f64, Dim<[usize; 1]>>,
+    network_desired_output: &Array<f64, Dim<[usize; 1]>>,
 ) {
+    let mut desired_output = network_desired_output.clone();
     let _n = 1000.0;
 
     // a, a^(L-1), y sigmoid_derivative
@@ -89,10 +90,21 @@ fn back_propagation(
             }
         }
 
-            for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
-                println!("bias part [{}, {}]", i, j);
-                *matrix_element += sigmoid_derivative(z[j]) * 2.0 * (current_layer[j] - desired_output[j]);
+        for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
+            println!("bias part [{}, {}]", i, j);
+            *matrix_element += sigmoid_derivative(z[j]) * 2.0 * (current_layer[j] - desired_output[j]);
+        }
+
+        let mut next_iteration_desired_output: Array<f64, Dim<[usize; 1]>> = Array::zeros(previous_layer.raw_dim());
+
+        for (j, matrix_element) in next_iteration_desired_output.iter_mut().enumerate() {
+            println!("desired output part [{}, {}]", i, j);
+            let mut sum = 0.0;
+            for column in 0..weight_gradient_part.ncols() {
+                sum += weight_gradient_part[[j,column]] * sigmoid_derivative(z[j]) * 2.0 * (current_layer[j] - desired_output[j])
             }
+            *matrix_element += sum;
+        }
 
         println!("{:?}", weight_gradient_part);
     }
