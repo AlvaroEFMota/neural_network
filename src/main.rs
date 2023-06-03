@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use ndarray::{array, Array, Dim, IxDynImpl};
+use ndarray::{array, Array, Dim};
 
 const EULER: f64 = 2.7182818284590452353;
 
@@ -8,7 +8,6 @@ fn main() {
     let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
     let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
     let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-    // let mut gradient_corrections: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
 
     let bias1: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
     let bias2: Array<f64, Dim<[usize; 1]>> = array![2., 2.];
@@ -20,14 +19,12 @@ fn main() {
     weights.push(w1);
     weights.push(w2);
 
-
     let mut weight_gradients: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
     let mut bias_gradients: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
 
-
     for weight in weights.iter() {
-        let mut weight_gradient = Array::zeros(weight.raw_dim());
-        let mut bias_gradient = Array::zeros(weight.ncols());
+        let weight_gradient = Array::zeros(weight.raw_dim());
+        let bias_gradient = Array::zeros(weight.ncols());
         weight_gradients.push(weight_gradient);
         bias_gradients.push(bias_gradient);
     }
@@ -35,11 +32,19 @@ fn main() {
     let input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
     let desired_output: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
     println!(
-        "{:?}",
+        "Forward propagation result -> {:?}",
         forward_propagation(&input, &weights, &biases, &mut layers)
     );
     println!("Camadas {:?}", layers);
-    back_propagation(&weights, &biases, &mut weight_gradients, &mut bias_gradients, &layers, &desired_output);
+    back_propagation(
+        &weights,
+        &biases,
+        &mut weight_gradients,
+        &mut bias_gradients,
+        &layers,
+        &desired_output,
+        1.0,
+    );
 }
 
 fn forward_propagation(
@@ -48,6 +53,7 @@ fn forward_propagation(
     biases: &Vec<Array<f64, Dim<[usize; 1]>>>,
     layers: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
 ) -> Array<f64, Dim<[usize; 1]>> {
+    layers.push(input.clone());
     let mut layer: Array<f64, Dim<[usize; 1]>> = input.clone();
     for (i, weight) in weights.iter().enumerate() {
         layer = layer.dot(weight).add(&biases[i]);
@@ -66,52 +72,62 @@ fn back_propagation(
     bias_gradients: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
     layers: &Vec<Array<f64, Dim<[usize; 1]>>>,
     network_desired_output: &Array<f64, Dim<[usize; 1]>>,
+    total_training_data: f64,
 ) {
     let mut desired_output = network_desired_output.clone();
-    let _n = 1000.0;
 
-    // a, a^(L-1), y sigmoid_derivative
     for (i, _layer) in layers.iter().enumerate().rev() {
-        // let [rows, cols] = weights[i].shape();
-        // let mut weight_gradient_part = Array::<f64, _ >::zeros(weights[i].shape());
+        if i > 0 {
+            let weight_gradient_part = &mut weight_gradients[i-1];
+            let bias_gradient_part = &mut bias_gradients[i-1];
+            let current_layer = &layers[i];
+            let previous_layer = &layers[i - 1];
 
-        let weight_gradient_part = &mut weight_gradients[i];
-        let bias_gradient_part = &mut bias_gradients[i];
-        let current_layer = &layers[i];
-        let previous_layer = &layers[i-1];
+            let z = previous_layer.dot(&weights[i-1]).add(&biases[i-1]);
 
-
-        let z = previous_layer.dot(&weights[i]).add(&biases[i]);
-
-        for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate(){
-            for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
-                println!("weight part [{}, {}, {}]", i, j, k);
-                *matrix_element += previous_layer[j] * sigmoid_derivative(z[k]) * 2.0 * (current_layer[k] - desired_output[k]);
+            for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
+                for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
+                    println!("weight part [{}, {}, {}]", i, j, k);
+                    *matrix_element -= (1.0 / total_training_data as f64)
+                        * previous_layer[j]
+                        * sigmoid_derivative(z[k])
+                        * 2.0
+                        * (current_layer[k] - desired_output[k]);
+                }
             }
-        }
 
-        for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
-            println!("bias part [{}, {}]", i, j);
-            *matrix_element += sigmoid_derivative(z[j]) * 2.0 * (current_layer[j] - desired_output[j]);
-        }
-
-        let mut next_iteration_desired_output: Array<f64, Dim<[usize; 1]>> = Array::zeros(previous_layer.raw_dim());
-
-        for (j, matrix_element) in next_iteration_desired_output.iter_mut().enumerate() {
-            println!("desired output part [{}, {}]", i, j);
-            let mut sum = 0.0;
-            for column in 0..weight_gradient_part.ncols() {
-                sum += weight_gradient_part[[j,column]] * sigmoid_derivative(z[j]) * 2.0 * (current_layer[j] - desired_output[j])
+            for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
+                println!("bias part [{}, {}]", i, j);
+                *matrix_element -= (1.0 / total_training_data as f64)
+                    * sigmoid_derivative(z[j])
+                    * 2.0
+                    * (current_layer[j] - desired_output[j]);
             }
-            *matrix_element += sum;
-        }
 
-        println!("{:?}", weight_gradient_part);
+            let mut next_iteration_desired_output: Array<f64, Dim<[usize; 1]>> =
+                Array::zeros(previous_layer.raw_dim());
+
+            for (j, matrix_element) in next_iteration_desired_output.iter_mut().enumerate() {
+                println!("desired output part [{}, {}]", i, j);
+                let mut sum = 0.0;
+                for column in 0..weight_gradient_part.ncols() {
+                    sum += weight_gradient_part[[j, column]]
+                        * sigmoid_derivative(z[column])
+                        * 2.0
+                        * (current_layer[column] - desired_output[column]);
+                }
+                *matrix_element += sum;
+            }
+
+            desired_output = next_iteration_desired_output;
+            println!("weight part \n{:?}", weight_gradient_part);
+            println!("bias part \n{:?}", bias_gradient_part);
+        }
     }
 
     // for (i, matrix_row) in layer.outer_iter_mut().enumerate(){
-        // for (j, matrix_element) in matrix_row.iter_mut().enumerate() {
-        // }
+    // for (j, matrix_element) in matrix_row.iter_mut().enumerate() {
+    // }
     // }
 }
 
