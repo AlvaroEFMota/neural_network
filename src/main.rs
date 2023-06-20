@@ -47,7 +47,7 @@ fn main() {
     );
 }
 
-fn forward_propagation(
+fn forward_propagation( // TODO store z[i]
     input: &Array<f64, Dim<[usize; 1]>>,
     weights: &Vec<Array<f64, Dim<[usize; 2]>>>,
     biases: &Vec<Array<f64, Dim<[usize; 1]>>>,
@@ -58,6 +58,7 @@ fn forward_propagation(
     for (i, weight) in weights.iter().enumerate() {
         layer = layer.dot(weight).add(&biases[i]);
         let layer_sigmoid = layer.mapv(|x: f64| sigmoid(x));
+        println!("layer: {:?}",layer_sigmoid);
         layers.push(layer_sigmoid.clone());
         layer = layer_sigmoid;
     }
@@ -82,24 +83,26 @@ fn back_propagation(
             let bias_gradient_part = &mut bias_gradients[i-1];
             let current_layer = &layers[i];
             let previous_layer = &layers[i - 1];
+            let weight = &weights[i-1];
 
-            let z = previous_layer.dot(&weights[i-1]).add(&biases[i-1]);
+            let z = previous_layer.dot(weight).add(&biases[i-1]);
+            println!("z = {:?}",z);
 
             for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
                 for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
-                    println!("weight part [{}, {}, {}]", i, j, k);
                     *matrix_element -= (1.0 / total_training_data as f64)
                         * previous_layer[j]
                         * sigmoid_derivative(z[k])
                         * 2.0
                         * (current_layer[k] - desired_output[k]);
+                    // println!("weight part [camada {}, L-1 {} = {}, L {} = {}, z = {}, y = {}] = {}", i, j, previous_layer[j], k, current_layer[k], z[k], desired_output[k], matrix_element);
                 }
             }
 
             for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
                 println!("bias part [{}, {}]", i, j);
                 *matrix_element -= (1.0 / total_training_data as f64)
-                    * sigmoid_derivative(z[j])
+                    *sigmoid_derivative(z[j])
                     * 2.0
                     * (current_layer[j] - desired_output[j]);
             }
@@ -111,11 +114,13 @@ fn back_propagation(
                 println!("desired output part [{}, {}]", i, j);
                 let mut sum = 0.0;
                 for column in 0..weight_gradient_part.ncols() {
-                    sum += weight_gradient_part[[j, column]]
+                    sum += weight[[j, column]]
                         * sigmoid_derivative(z[column])
                         * 2.0
                         * (current_layer[column] - desired_output[column]);
+                    println!("new desireed output ({j},{column}) [W = {}]= {}", weight[[j, column]], weight[[j, column]] * sigmoid_derivative(z[column]) * 2.0 * (current_layer[column] - desired_output[column]))
                 }
+                println!("sum = {sum}");
                 *matrix_element += sum;
             }
 
