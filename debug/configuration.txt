@@ -1,0 +1,2 @@
+Add in the lldb launch initCommands settings the following command
+"command script import ${workspaceFolder}/debug/ndarray_formatter.py"
