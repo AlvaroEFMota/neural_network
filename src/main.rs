@@ -29,9 +29,9 @@ fn main() {
     }
 
     let input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-    let desired_output: Array<f64, Dim<[usize; 1]>> = array![3., 3.];
-    let total_training_data = 10;
-    for _ in 0..total_training_data {
+    let desired_output: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
+    let total_training_data = 1;
+    for _ in 0..total_training_data*270 {
             let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
         for _ in 0..total_training_data {
             forward_propagation(&input, &weights, &biases, &mut layers);
@@ -46,7 +46,7 @@ fn main() {
             );
             layers.clear()
         }
-        for i in 0..weights.len() - 1 {
+        for i in 0..weights.len() {
             weights[i] = &weights[i] + &weight_gradients[i];
             biases[i] = &biases[i] + &bias_gradients[i];
         }
@@ -55,6 +55,7 @@ fn main() {
             forward_propagation(&input, &weights, &biases, &mut layers)
         );
     }
+    print!("finish");
 }
 
 fn forward_propagation(
@@ -98,7 +99,7 @@ fn back_propagation(
 
             for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
                 for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
-                    *matrix_element += (1.0 / total_training_data as f64)
+                    *matrix_element -= (1.0 / total_training_data as f64)
                         * previous_layer[j]
                         * sigmoid_derivative(z[k])
                         * 2.0
@@ -107,7 +108,7 @@ fn back_propagation(
             }
 
             for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
-                *matrix_element += (1.0 / total_training_data as f64)
+                *matrix_element -= (1.0 / total_training_data as f64)
                     * sigmoid_derivative(z[j])
                     * 2.0
                     * (current_layer[j] - desired_output[j]);
