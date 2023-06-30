@@ -14,9 +14,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let network = vec![4, 4, 4, 1];
     for i in 0..network.len() - 1 {
         let w: Array<f64, Dim<[usize; 2]>> =
-            Array::random((network[i], network[i + 1]), Uniform::new(-100., 100.));
+            Array::random((network[i], network[i + 1]), Uniform::new(-1000., 1000.));
         let b: Array<f64, Dim<[usize; 1]>> =
-            Array::random(network[i + 1], Uniform::new(-100., 100.));
+            Array::random(network[i + 1], Uniform::new(-1000., 1000.));
         println!("w = {:?}", w);
         println!("b = {:?}", b);
         weights.push(w);
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // let input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
     // let desired_output: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-    let total_training_data = 100;
+    let total_training_data = 1000;
 
     for _ in 0..total_training_data {
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
@@ -74,8 +74,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         for i in 0..weights.len() {
             weight_gradients[i] = weight_gradients[i].clone().mul(1.0/400.0);
             weights[i] = &weights[i] + &weight_gradients[i];
+            weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
             bias_gradients[i] = bias_gradients[i].clone().mul(1.0/400.0);
             biases[i] = &biases[i] + &bias_gradients[i];
+            bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
         }
     }
     let mut rdr = Reader::from_path("banknotes.csv")?;
