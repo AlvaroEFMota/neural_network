@@ -6,60 +6,62 @@ use std::error::Error;
 use std::ops::{Add, Mul};
 
 const EULER: f64 = 2.7182818284590452353;
+const RANDOM_RANGE: f64 = 10000000.0;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
-    let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+    for _ in 0..1 {
+        let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
+        let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
 
-    let network = vec![4, 4, 4, 1];
-    for i in 0..network.len() - 1 {
-        let w: Array<f64, Dim<[usize; 2]>> =
-            Array::random((network[i], network[i + 1]), Uniform::new(-1000., 1000.));
-        let b: Array<f64, Dim<[usize; 1]>> =
-            Array::random(network[i + 1], Uniform::new(-1000., 1000.));
-        println!("w = {:?}", w);
-        println!("b = {:?}", b);
-        weights.push(w);
-        biases.push(b);
-    }
+        let network = vec![2, 4, 4, 1];
+        for i in 0..network.len() - 1 {
+            let w: Array<f64, Dim<[usize; 2]>> = Array::random(
+                (network[i], network[i + 1]),
+                Uniform::new(-RANDOM_RANGE, RANDOM_RANGE),
+            );
+            let b: Array<f64, Dim<[usize; 1]>> =
+                Array::random(network[i + 1], Uniform::new(-RANDOM_RANGE, RANDOM_RANGE));
+            println!("w = {:?}", w);
+            println!("b = {:?}", b);
+            weights.push(w);
+            biases.push(b);
+        }
 
-    // let bias1: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-    // let bias2: Array<f64, Dim<[usize; 1]>> = array![2.];
-    // biases.push(bias1);
-    // biases.push(bias2);
-    // let w1: Array<f64, Dim<[usize; 2]>> = array![[1., 2.], [3., 4.], [1., 2.], [3., 4.]];
-    // let w2: Array<f64, Dim<[usize; 2]>> = array![[3.], [2.]];
+        // let bias1: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
+        // let bias2: Array<f64, Dim<[usize; 1]>> = array![2.];
+        // biases.push(bias1);
+        // biases.push(bias2);
+        // let w1: Array<f64, Dim<[usize; 2]>> = array![[1., 2.], [3., 4.], [1., 2.], [3., 4.]];
+        // let w2: Array<f64, Dim<[usize; 2]>> = array![[3.], [2.]];
 
-    // weights.push(w1);
-    // weights.push(w2);
+        // weights.push(w1);
+        // weights.push(w2);
 
-    let mut weight_gradients: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
-    let mut bias_gradients: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+        let mut weight_gradients: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
+        let mut bias_gradients: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
 
-    for weight in weights.iter() {
-        let _x = weight.raw_dim();
-        let weight_gradient = Array::zeros(weight.raw_dim());
-        let bias_gradient = Array::zeros(weight.ncols());
-        weight_gradients.push(weight_gradient);
-        bias_gradients.push(bias_gradient);
-    }
+        for weight in weights.iter() {
+            let _x = weight.raw_dim();
+            let weight_gradient = Array::zeros(weight.raw_dim());
+            let bias_gradient = Array::zeros(weight.ncols());
+            weight_gradients.push(weight_gradient);
+            bias_gradients.push(bias_gradient);
+        }
 
-    // let input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-    // let desired_output: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-    let total_training_data = 1000;
+        let mut input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
+        let mut desired_output: Array<f64, Dim<[usize; 1]>> = array![5.];
+        let total_training_data = 50000;
 
-    for _ in 0..total_training_data {
-        let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-        let mut rdr = Reader::from_path("banknotes.csv")?;
-        for result in rdr.records() {
-            let record = result?;
-            let input: Array<f64, Dim<[usize; 1]>> = array![
-                record[0].parse::<f64>()?,
-                record[1].parse::<f64>()?,
-                record[2].parse::<f64>()?,
-                record[3].parse::<f64>()?,
-            ];
-            let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
+        for n in 0..total_training_data {
+
+            if n%2 == 0 {
+                input = array![1., 1.];
+                desired_output = array![1.];
+            } else {
+                input = array![1., 0.];
+                desired_output = array![10.]
+            }
+            let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
             forward_propagation(&input, &weights, &biases, &mut layers);
             back_propagation(
                 &weights,
@@ -69,33 +71,30 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &layers,
                 &desired_output,
             );
-            layers.clear()
+            layers.clear();
+            let _x = 42;
+            for i in 0..weights.len() {
+                // weight_gradients[i] = weight_gradients[i].clone().mul(1.0 / 400.0);
+                // bias_gradients[i] = bias_gradients[i].clone().mul(1.0 / 400.0);
+                weights[i] = &weights[i] + &weight_gradients[i];
+                biases[i] = &biases[i] + &bias_gradients[i];
+                weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
+                bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
+            }
         }
-        for i in 0..weights.len() {
-            weight_gradients[i] = weight_gradients[i].clone().mul(1.0/400.0);
-            weights[i] = &weights[i] + &weight_gradients[i];
-            weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
-            bias_gradients[i] = bias_gradients[i].clone().mul(1.0/400.0);
-            biases[i] = &biases[i] + &bias_gradients[i];
-            bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
-        }
-    }
-    let mut rdr = Reader::from_path("banknotes.csv")?;
-    for result in rdr.records() {
-        let record = result?;
-        let input: Array<f64, Dim<[usize; 1]>> = array![
-            record[0].parse::<f64>()?,
-            record[1].parse::<f64>()?,
-            record[2].parse::<f64>()?,
-            record[3].parse::<f64>()?,
-        ];
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+        input = array![1., 1.];
+        println!(
+            "Forward propagation result -> {:?}",
+            forward_propagation(&input, &weights, &biases, &mut layers)
+        );
+        layers.clear();
+        input = array![1., 0.];
         println!(
             "Forward propagation result -> {:?}",
             forward_propagation(&input, &weights, &biases, &mut layers)
         );
     }
-    println!("finish");
     Ok(())
 }
 
@@ -110,9 +109,13 @@ fn forward_propagation(
     let mut layer: Array<f64, Dim<[usize; 1]>> = input.clone();
     for (i, weight) in weights.iter().enumerate() {
         layer = layer.dot(weight).add(&biases[i]);
-        let layer_sigmoid = layer.mapv(|x: f64| sigmoid(x));
-        layers.push(layer_sigmoid.clone());
-        layer = layer_sigmoid;
+        if i < weights.len() - 1 {
+            let layer_sigmoid = layer.mapv(|x: f64| sigmoid(x));
+            layers.push(layer_sigmoid.clone());
+            layer = layer_sigmoid;
+        } else {
+            layers.push(layer.clone());
+        }
     }
     layer
 }
@@ -136,20 +139,29 @@ fn back_propagation(
             let weight = &weights[i - 1];
 
             let z = previous_layer.dot(weight).add(&biases[i - 1]);
+            let z = z.mapv(|x: f64| sigmoid(x));
+
+            let mut error = 0.0;
+            let len = current_layer.len();
+            for j in 0..len {
+                error +=
+                    (current_layer[j] - desired_output[j]) * (current_layer[j] - desired_output[j]);
+            }
+            // println!("{i} -> {error}\t");
 
             for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
                 for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
-                    *matrix_element -= previous_layer[j]
+                    *matrix_element += previous_layer[j]
                         * sigmoid_derivative(z[k])
                         * 2.0
-                        * (current_layer[k] - desired_output[k]);
+                        * (desired_output[k] - current_layer[k]);
                 }
             }
 
             for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
-                *matrix_element -= sigmoid_derivative(z[j])
-                    * 2.0
-                    * (current_layer[j] - desired_output[j]);
+                *matrix_element +=
+                    sigmoid_derivative(z[j]) * 2.0
+                    * (desired_output[j] - current_layer[j]);
             }
 
             let mut next_iteration_desired_output: Array<f64, Dim<[usize; 1]>> =
@@ -161,7 +173,7 @@ fn back_propagation(
                     sum += weight[[j, column]]
                         * sigmoid_derivative(z[column])
                         * 2.0
-                        * (current_layer[column] - desired_output[column]);
+                        * (desired_output[column] - current_layer[column]);
                 }
                 *matrix_element += sum;
             }
@@ -180,3 +192,14 @@ fn sigmoid(x: f64) -> f64 {
 fn sigmoid_derivative(x: f64) -> f64 {
     sigmoid(x) * (1.0 - sigmoid(x))
 }
+
+// for result in rdr.records() {
+//     let record = result?;
+//     let input: Array<f64, Dim<[usize; 1]>> = array![
+//         record[0].parse::<f64>()?,
+//         record[1].parse::<f64>()?,
+//         record[2].parse::<f64>()?,
+//         record[3].parse::<f64>()?,
+//     ];
+//     let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
+// }
