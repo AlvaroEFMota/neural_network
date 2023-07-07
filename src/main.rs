@@ -6,37 +6,40 @@ use std::error::Error;
 use std::ops::{Add, Mul};
 
 const EULER: f64 = 2.7182818284590452353;
-const RANDOM_RANGE: f64 = 10000000.0;
+const RANDOM_RANGE: f64 = 10000000000.0;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    for _ in 0..1 {
-        let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
-        let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+    let mut training_datas: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> =
+        vec![];
 
-        let network = vec![2, 4, 4, 1];
-        for i in 0..network.len() - 1 {
-            let w: Array<f64, Dim<[usize; 2]>> = Array::random(
-                (network[i], network[i + 1]),
-                Uniform::new(-RANDOM_RANGE, RANDOM_RANGE),
-            );
-            let b: Array<f64, Dim<[usize; 1]>> =
-                Array::random(network[i + 1], Uniform::new(-RANDOM_RANGE, RANDOM_RANGE));
-            println!("w = {:?}", w);
-            println!("b = {:?}", b);
-            weights.push(w);
-            biases.push(b);
+    for i in 0..1000 {
+        if i % 2 == 0 {
+            let input: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
+            let desired_output: Array<f64, Dim<[usize; 1]>> = array![1.];
+            training_datas.push((input, desired_output));
+        } else {
+            let input: Array<f64, Dim<[usize; 1]>> = array![1., 0.];
+            let desired_output: Array<f64, Dim<[usize; 1]>> = array![10.];
+            training_datas.push((input, desired_output));
         }
+    }
 
-        // let bias1: Array<f64, Dim<[usize; 1]>> = array![1., 1.];
-        // let bias2: Array<f64, Dim<[usize; 1]>> = array![2.];
-        // biases.push(bias1);
-        // biases.push(bias2);
-        // let w1: Array<f64, Dim<[usize; 2]>> = array![[1., 2.], [3., 4.], [1., 2.], [3., 4.]];
-        // let w2: Array<f64, Dim<[usize; 2]>> = array![[3.], [2.]];
-
-        // weights.push(w1);
-        // weights.push(w2);
-
+    let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
+    let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+    let network = vec![2, 4, 1];
+    for i in 0..network.len() - 1 {
+        let w: Array<f64, Dim<[usize; 2]>> = Array::random(
+            (network[i], network[i + 1]),
+            Uniform::new(-RANDOM_RANGE, RANDOM_RANGE),
+        );
+        let b: Array<f64, Dim<[usize; 1]>> =
+            Array::random(network[i + 1], Uniform::new(-RANDOM_RANGE, RANDOM_RANGE));
+        // println!("w = {:?}", w);
+        // println!("b = {:?}", b);
+        weights.push(w);
+        biases.push(b);
+    }
+    for _ in 0..100 {
         let mut weight_gradients: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
         let mut bias_gradients: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
 
@@ -52,15 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut desired_output: Array<f64, Dim<[usize; 1]>> = array![5.];
         let total_training_data = 50000;
 
-        for n in 0..total_training_data {
-
-            if n%2 == 0 {
-                input = array![1., 1.];
-                desired_output = array![1.];
-            } else {
-                input = array![1., 0.];
-                desired_output = array![10.]
-            }
+        for (input, desired_output) in &training_datas {
             let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
             forward_propagation(&input, &weights, &biases, &mut layers);
             back_propagation(
@@ -72,29 +67,29 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &desired_output,
             );
             layers.clear();
-            let _x = 42;
-            for i in 0..weights.len() {
-                // weight_gradients[i] = weight_gradients[i].clone().mul(1.0 / 400.0);
-                // bias_gradients[i] = bias_gradients[i].clone().mul(1.0 / 400.0);
-                weights[i] = &weights[i] + &weight_gradients[i];
-                biases[i] = &biases[i] + &bias_gradients[i];
-                weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
-                bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
-            }
         }
-        let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-        input = array![1., 1.];
-        println!(
-            "Forward propagation result -> {:?}",
-            forward_propagation(&input, &weights, &biases, &mut layers)
-        );
-        layers.clear();
-        input = array![1., 0.];
-        println!(
-            "Forward propagation result -> {:?}",
-            forward_propagation(&input, &weights, &biases, &mut layers)
-        );
+        let _x = 42;
+        for i in 0..weights.len() {
+            weight_gradients[i] = weight_gradients[i].clone().mul(1.0 / training_datas.len() as f64);
+            bias_gradients[i] = bias_gradients[i].clone().mul(1.0 / training_datas.len() as f64);
+            weights[i] = &weights[i] + &weight_gradients[i];
+            biases[i] = &biases[i] + &bias_gradients[i];
+            weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
+            bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
+        }
     }
+    let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+    let input = array![1., 1.];
+    println!(
+        "Forward propagation result -> {:?}",
+        forward_propagation(&input, &weights, &biases, &mut layers)
+    );
+    layers.clear();
+    let input = array![1., 0.];
+    println!(
+        "Forward propagation result -> {:?}",
+        forward_propagation(&input, &weights, &biases, &mut layers)
+    );
     Ok(())
 }
 
@@ -147,7 +142,7 @@ fn back_propagation(
                 error +=
                     (current_layer[j] - desired_output[j]) * (current_layer[j] - desired_output[j]);
             }
-            // println!("{i} -> {error}\t");
+            println!("{i} -> {error}\t");
 
             for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
                 for (k, matrix_element) in matrix_row.iter_mut().enumerate() {
@@ -160,8 +155,7 @@ fn back_propagation(
 
             for (j, matrix_element) in bias_gradient_part.iter_mut().enumerate() {
                 *matrix_element +=
-                    sigmoid_derivative(z[j]) * 2.0
-                    * (desired_output[j] - current_layer[j]);
+                    sigmoid_derivative(z[j]) * 2.0 * (desired_output[j] - current_layer[j]);
             }
 
             let mut next_iteration_desired_output: Array<f64, Dim<[usize; 1]>> =
