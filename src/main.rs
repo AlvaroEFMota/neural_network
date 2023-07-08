@@ -6,7 +6,7 @@ use std::error::Error;
 use std::ops::{Add, Mul};
 
 const EULER: f64 = 2.7182818284590452353;
-const RANDOM_RANGE: f64 = 1000.0;
+const RANDOM_RANGE: f64 = 100.0;
 const LEARNING_RATE: f64 = 1.0;
 const RETRAING: i64 = 1000;
 
@@ -67,16 +67,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &desired_output,
             );
             layers.clear();
-        let _x = 42;
-        for i in 0..weights.len() {
-            weight_gradients[i] = weight_gradients[i].clone().mul((1.0 / training_datas.len() as f64) * LEARNING_RATE);
-            bias_gradients[i] = bias_gradients[i].clone().mul(1.0 / (training_datas.len() as f64) * LEARNING_RATE);
-            weights[i] = &weights[i] - &weight_gradients[i];
-            biases[i] = &biases[i] - &bias_gradients[i];
-            weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
-            bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
+            let _x = 42;
+            for i in 0..weights.len() {
+                weight_gradients[i] = weight_gradients[i]
+                    .clone()
+                    .mul((1.0 / training_datas.len() as f64) * LEARNING_RATE);
+                bias_gradients[i] = bias_gradients[i]
+                    .clone()
+                    .mul(1.0 / (training_datas.len() as f64) * LEARNING_RATE);
+                weights[i] = &weights[i] - &weight_gradients[i];
+                biases[i] = &biases[i] - &bias_gradients[i];
+                weight_gradients[i] = Array::zeros(weight_gradients[i].raw_dim());
+                bias_gradients[i] = Array::zeros(bias_gradients[i].raw_dim());
+            }
         }
-    }
     }
     let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
     let input = array![1., 1.];
