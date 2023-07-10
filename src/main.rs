@@ -18,6 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     training_datas.push((array![1., 1.], array![1., 0.]));
     training_datas.push((array![1., 0.], array![0., 1.]));
     training_datas.push((array![0.5, 0.5], array![1., 1.]));
+    training_datas.push((array![0.1, 0.5], array![0., 0.]));
     let network = vec![2, 4, 2];
 
     // Banknotes inputs
