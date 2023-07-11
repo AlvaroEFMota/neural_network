@@ -7,7 +7,7 @@ use std::ops::{Add, Mul};
 
 const EULER: f64 = 2.7182818284590452353;
 const RANDOM_RANGE: f64 = 0.5;
-const LEARNING_RATE: f64 = 20.0;
+const LEARNING_RATE: f64 = 2.0;
 const EPOCHS: i64 = 10000;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     training_datas.push((array![1., 0.], array![1.]));
     training_datas.push((array![1.0, 1.0], array![0.5]));
     training_datas.push((array![0., 0.], array![0.2]));
-    let network = vec![2, 4, 1];
+    let network = vec![2, 2, 1];
 
     // Proof of concept 2, inputs
     // training_datas.push((array![1., 1.], array![1., 0.]));
