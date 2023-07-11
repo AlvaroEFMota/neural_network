@@ -19,7 +19,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     training_datas.push((array![1., 0.], array![1.]));
     training_datas.push((array![1.0, 1.0], array![0.5]));
     training_datas.push((array![0., 0.], array![0.2]));
-    let network = vec![2, 2, 1];
+    training_datas.push((array![0.2, 0.7], array![0.8]));
+    let network = vec![2, 3, 1];
 
     // Proof of concept 2, inputs
     // training_datas.push((array![1., 1.], array![1., 0.]));
