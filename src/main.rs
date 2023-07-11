@@ -14,12 +14,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut training_datas: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> =
         vec![];
 
-    // Proof of concept inputs
-    training_datas.push((array![1., 1.], array![1., 0.]));
-    training_datas.push((array![1., 0.], array![0., 1.]));
-    training_datas.push((array![0.5, 0.5], array![1., 1.]));
-    training_datas.push((array![0.1, 0.5], array![0., 0.]));
-    let network = vec![2, 4, 2];
+    // Proof of concept 1, inputs
+    training_datas.push((array![0., 1.], array![0.]));
+    training_datas.push((array![1., 0.], array![1.]));
+    training_datas.push((array![1.0, 1.0], array![0.5]));
+    training_datas.push((array![0., 0.], array![0.2]));
+    let network = vec![2, 4, 1];
+
+    // Proof of concept 2, inputs
+    // training_datas.push((array![1., 1.], array![1., 0.]));
+    // training_datas.push((array![1., 0.], array![0., 1.]));
+    // training_datas.push((array![0.5, 0.5], array![1., 1.]));
+    // training_datas.push((array![0.1, 0.5], array![0., 0.]));
+    // let network = vec![2, 4, 2];    
 
     // Banknotes inputs
     // let mut rdr = Reader::from_path("banknotes.csv").unwrap();
