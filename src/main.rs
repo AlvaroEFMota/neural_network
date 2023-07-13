@@ -105,7 +105,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn forward_propagation(
-    // TODO store z[i]
     input: &Array<f64, Dim<[usize; 1]>>,
     weights: &Vec<Array<f64, Dim<[usize; 2]>>>,
     biases: &Vec<Array<f64, Dim<[usize; 1]>>>,
@@ -140,9 +139,7 @@ fn back_propagation(
             let current_layer = &layers[i];
             let previous_layer = &layers[i - 1];
             let mut weight = weights[i - 1].clone();
-            let mut bias = biases[i - 1].clone();
             let z = &zs[i];
-            let previous_z = &zs[i-1];
             let len = current_layer.len();
             let mut sum = 0.0;
             for j in 0..len {
