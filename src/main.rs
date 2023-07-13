@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //     let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
     //     training_datas.push((input, desired_output));
     // }
-    // let network = vec![4, 8, 8, 8, 8, 1];
+    // let network = vec![4, 4, 4, 1];
 
     // The Neural Network
     let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
@@ -91,6 +91,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{:?}", error);
         error = Array::zeros(network.len());
     }
+    
     for (input, _) in &training_datas {
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
         let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
