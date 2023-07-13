@@ -55,10 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Uniform::new(-RANDOM_RANGE, RANDOM_RANGE),
         );
         let b: Array<f64, Dim<[usize; 1]>> =
-            // Array::random(network[i + 1], Uniform::new(-RANDOM_RANGE, RANDOM_RANGE));
             Array::zeros(network[i + 1]);
-        // println!("w = {:?}", w);
-        // println!("b = {:?}", b);
         weights.push(w);
         biases.push(b);
     }
