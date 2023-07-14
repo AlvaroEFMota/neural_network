@@ -89,7 +89,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         error = Array::zeros(network.len());
     }
     
-    let mut hits = 0;
+    let mut hit_count = 0;
     let error_margin = 0.01;
     for (input, output) in &training_datas {
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
@@ -100,15 +100,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             neural_network_output
         );
         
+        let mut hit = true;
         for (i, elem) in neural_network_output.iter().enumerate() {
-            if elem + error_margin > output[i] && elem - error_margin < output[i] {
-                hits += 1;
+            if !(elem + error_margin > output[i] && elem - error_margin < output[i]) {
+                hit = false
             }
         }
+
+        if hit {
+            hit_count += 1;
+        }
+
         layers.clear();
     }
-    println!("Total hits = {hits}");
-    println!("hits percent = {}%", (hits as f32 / training_datas.len() as f32) * 100.0);
+    println!("Total hits = {hit_count}");
+    println!("hits percent = {}%", (hit_count as f32 / training_datas.len() as f32) * 100.0);
     Ok(())
 }
 
