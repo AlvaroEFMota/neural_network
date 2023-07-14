@@ -89,15 +89,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         error = Array::zeros(network.len());
     }
     
-    for (input, _) in &training_datas {
+    let mut hits = 0;
+    let error_margin = 0.01;
+    for (input, output) in &training_datas {
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
         let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
+        let neural_network_output = forward_propagation(&input, &weights, &biases, &mut layers, &mut zs);
         println!(
             "Forward propagation result -> {:?}",
-            forward_propagation(&input, &weights, &biases, &mut layers, &mut zs)
+            neural_network_output
         );
+        
+        for (i, elem) in neural_network_output.iter().enumerate() {
+            if elem + error_margin > output[i] && elem - error_margin < output[i] {
+                hits += 1;
+            }
+        }
         layers.clear();
     }
+    println!("Total hits = {hits}");
+    println!("hits percent = {}%", (hits as f32 / training_datas.len() as f32) * 100.0);
     Ok(())
 }
 
