@@ -4,11 +4,12 @@ use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use std::error::Error;
 use std::ops::{Add, Mul};
+use rand::prelude::*;
 
 const EULER: f64 = 2.7182818284590452353;
 const RANDOM_RANGE: f64 = 0.5;
 const LEARNING_RATE: f64 = 2.0;
-const EPOCHS: i64 = 10000;
+const EPOCHS: i64 = 100;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut all_data: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> = vec![]; 
@@ -45,6 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
         all_data.push((input, desired_output));
     }
+    shuffle(&mut all_data[..300]);
     let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..300];
     let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[300..];
     let network = vec![4, 4, 4, 1];
@@ -201,12 +203,18 @@ fn back_propagation(
     }
 }
 
-#[allow(dead_code)]
 fn sigmoid(x: f64) -> f64 {
     1.0 / (1. + EULER.powf(-x))
 }
 
-#[allow(dead_code)]
 fn sigmoid_derivative(x: f64) -> f64 {
     sigmoid(x) * (1.0 - sigmoid(x))
+}
+
+#[allow(dead_code)]
+fn shuffle<T>(data: &mut [T]) {
+    let mut rng = rand::thread_rng();
+    for i in 0..data.len()-1 {
+        data.swap(i, rng.gen::<usize>()%data.len());
+    }
 }

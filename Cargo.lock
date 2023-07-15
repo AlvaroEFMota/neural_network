@@ -110,6 +110,7 @@ dependencies = [
  "csv",
  "ndarray",
  "ndarray-rand",
+ "rand",
 ]
 
 [[package]]
