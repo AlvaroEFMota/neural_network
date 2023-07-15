@@ -11,38 +11,43 @@ const LEARNING_RATE: f64 = 2.0;
 const EPOCHS: i64 = 10000;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut training_datas: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> =
-        vec![];
+    let mut all_data: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> = vec![]; 
 
     // Proof of concept 1, inputs
-    training_datas.push((array![0., 1.], array![0.]));
-    training_datas.push((array![1., 0.], array![1.]));
-    training_datas.push((array![1.0, 1.0], array![0.5]));
-    training_datas.push((array![0., 0.], array![0.2]));
-    training_datas.push((array![0.2, 0.7], array![0.8]));
-    let network = vec![2, 3, 1];
+    // all_data.push((array![0., 1.], array![0.]));
+    // all_data.push((array![1., 0.], array![1.]));
+    // all_data.push((array![1.0, 1.0], array![0.5]));
+    // all_data.push((array![0., 0.], array![0.2]));
+    // all_data.push((array![0.2, 0.7], array![0.8]));
+    // let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
+    // let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
+    // let network = vec![2, 3, 1];
 
     // Proof of concept 2, inputs
-    // training_datas.push((array![1., 1.], array![1., 0.]));
-    // training_datas.push((array![1., 0.], array![0., 1.]));
-    // training_datas.push((array![0.5, 0.5], array![1., 1.]));
-    // training_datas.push((array![0.1, 0.5], array![0., 0.]));
+    // all_data.push((array![1., 1.], array![1., 0.]));
+    // all_data.push((array![1., 0.], array![0., 1.]));
+    // all_data.push((array![0.5, 0.5], array![1., 1.]));
+    // all_data.push((array![0.1, 0.5], array![0., 0.]));
+    // let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
+    // let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
     // let network = vec![2, 4, 2];    
 
     // Banknotes inputs
-    // let mut rdr = Reader::from_path("banknotes.csv").unwrap();
-    // for result in rdr.records() {
-    //     let record = result?;
-    //     let input: Array<f64, Dim<[usize; 1]>> = array![
-    //         record[0].parse::<f64>()?,
-    //         record[1].parse::<f64>()?,
-    //         record[2].parse::<f64>()?,
-    //         record[3].parse::<f64>()?,
-    //     ];
-    //     let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
-    //     training_datas.push((input, desired_output));
-    // }
-    // let network = vec![4, 4, 4, 1];
+    let mut rdr = Reader::from_path("data/banknotes.csv").unwrap();
+    for result in rdr.records() {
+        let record = result?;
+        let input: Array<f64, Dim<[usize; 1]>> = array![
+            record[0].parse::<f64>()?,
+            record[1].parse::<f64>()?,
+            record[2].parse::<f64>()?,
+            record[3].parse::<f64>()?,
+        ];
+        let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
+        all_data.push((input, desired_output));
+    }
+    let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..300];
+    let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[300..];
+    let network = vec![4, 4, 4, 1];
 
     // The Neural Network
     let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
@@ -71,7 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             bias_gradients.push(bias_gradient);
         }
 
-        for (input, desired_output) in &training_datas {
+        for (input, desired_output) in training_data {
             let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
             let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
             forward_propagation(&input, &weights, &biases, &mut layers, &mut zs);
@@ -90,8 +95,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     
     let mut hit_count = 0;
-    let error_margin = 0.01;
-    for (input, output) in &training_datas {
+    let error_margin = 0.03;
+    for (input, output) in validation_data {
         let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
         let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
         let neural_network_output = forward_propagation(&input, &weights, &biases, &mut layers, &mut zs);
@@ -114,7 +119,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         layers.clear();
     }
     println!("Total hits = {hit_count}");
-    println!("hits percent = {}%", (hit_count as f32 / training_datas.len() as f32) * 100.0);
+    println!("hits percent = {}%", (hit_count as f32 / validation_data.len() as f32) * 100.0);
     Ok(())
 }
 
