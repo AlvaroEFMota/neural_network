@@ -3,16 +3,20 @@ use ndarray::{array, Array, Dim};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use std::error::Error;
-use std::ops::{Add, Mul};
+use std::ops::Add;
 use rand::prelude::*;
 
-const EULER: f64 = 2.7182818284590452353;
+const EULER: f64 = std::f64::consts::E;
 const RANDOM_RANGE: f64 = 0.5;
 const LEARNING_RATE: f64 = 2.0;
 const EPOCHS: i64 = 100;
 
+type Matrix1D = Array<f64, Dim<[usize; 1]>>;
+type Matrix2D = Array<f64, Dim<[usize; 2]>>;
+
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut all_data: Vec<(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)> = vec![]; 
+    let mut all_data: Vec<(Matrix1D , Matrix1D)> = vec![]; 
 
     // Proof of concept 1, inputs
     // all_data.push((array![0., 1.], array![0.]));
@@ -20,8 +24,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // all_data.push((array![1.0, 1.0], array![0.5]));
     // all_data.push((array![0., 0.], array![0.2]));
     // all_data.push((array![0.2, 0.7], array![0.8]));
-    // let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
-    // let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
+    // let training_data: &[(Matrix1D , Matrix1D)] = &all_data[..];
+    // let validation_data: &[(Matrix1D, Matrix1D)] = &all_data[..];
     // let network = vec![2, 3, 1];
 
     // Proof of concept 2, inputs
@@ -29,47 +33,47 @@ fn main() -> Result<(), Box<dyn Error>> {
     // all_data.push((array![1., 0.], array![0., 1.]));
     // all_data.push((array![0.5, 0.5], array![1., 1.]));
     // all_data.push((array![0.1, 0.5], array![0., 0.]));
-    // let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
-    // let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..];
+    // let training_data: &[(Matrix1D , Matrix1D)] = &all_data[..];
+    // let validation_data: &[(Matrix1D , Matrix1D)] = &all_data[..];
     // let network = vec![2, 4, 2];    
 
     // Banknotes inputs
     let mut rdr = Reader::from_path("data/banknotes.csv").unwrap();
     for result in rdr.records() {
         let record = result?;
-        let input: Array<f64, Dim<[usize; 1]>> = array![
+        let input: Matrix1D  = array![
             record[0].parse::<f64>()?,
             record[1].parse::<f64>()?,
             record[2].parse::<f64>()?,
             record[3].parse::<f64>()?,
         ];
-        let desired_output: Array<f64, Dim<[usize; 1]>> = array![record[4].parse::<f64>()?];
+        let desired_output: Matrix1D = array![record[4].parse::<f64>()?];
         all_data.push((input, desired_output));
     }
     shuffle(&mut all_data[..300]);
-    let training_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[..300];
-    let validation_data: &[(Array<f64, Dim<[usize; 1]>>, Array<f64, Dim<[usize; 1]>>)] = &all_data[300..];
+    let training_data: &[(Matrix1D , Matrix1D)] = &all_data[..300];
+    let validation_data: &[(Matrix1D, Matrix1D)] = &all_data[300..];
     let network = vec![4, 4, 4, 1];
 
     // The Neural Network
-    let mut weights: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
-    let mut biases: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-    let mut error: Array<f64, Dim<[usize; 1]>> = Array::zeros(network.len());
+    let mut weights: Vec<Matrix2D> = vec![];
+    let mut biases: Vec<Matrix1D> = vec![];
+    let mut error: Matrix1D = Array::zeros(network.len());
 
     for i in 0..network.len() - 1 {
-        let w: Array<f64, Dim<[usize; 2]>> = Array::random(
+        let w: Matrix2D = Array::random(
             (network[i], network[i + 1]),
             Uniform::new(-RANDOM_RANGE, RANDOM_RANGE),
         );
-        let b: Array<f64, Dim<[usize; 1]>> =
+        let b: Matrix1D  =
             Array::zeros(network[i + 1]);
         weights.push(w);
         biases.push(b);
     }
     for _ in 0..EPOCHS {
-        let mut weight_gradients: Vec<Array<f64, Dim<[usize; 2]>>> = vec![];
-        let mut bias_gradients: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-
+        let mut weight_gradients: Vec<Matrix2D> = vec![];
+        let mut bias_gradients: Vec<Matrix1D> = vec![];
+ 
         for weight in weights.iter() {
             let _x = weight.raw_dim();
             let weight_gradient = Array::zeros(weight.raw_dim());
@@ -79,15 +83,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         for (input, desired_output) in training_data {
-            let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-            let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-            forward_propagation(&input, &weights, &biases, &mut layers, &mut zs);
+            let mut layers: Vec<Matrix1D> = vec![];
+            let mut zs: Vec<Matrix1D> = vec![];
+            forward_propagation(input, &weights, &biases, &mut layers, &mut zs);
             back_propagation(
                 &mut weights,
                 &mut biases,
                 &layers,
                 &zs,
-                &desired_output,
+                desired_output,
                 &mut error,
             );
             layers.clear();
@@ -99,9 +103,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut hit_count = 0;
     let error_margin = 0.03;
     for (input, output) in validation_data {
-        let mut layers: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-        let mut zs: Vec<Array<f64, Dim<[usize; 1]>>> = vec![];
-        let neural_network_output = forward_propagation(&input, &weights, &biases, &mut layers, &mut zs);
+        let mut layers: Vec<Matrix1D> = vec![];
+        let mut zs: Vec<Matrix1D> = vec![];
+        let neural_network_output = forward_propagation(input, &weights, &biases, &mut layers, &mut zs);
         println!(
             "Forward propagation result -> {:?}",
             neural_network_output
@@ -126,19 +130,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn forward_propagation(
-    input: &Array<f64, Dim<[usize; 1]>>,
-    weights: &Vec<Array<f64, Dim<[usize; 2]>>>,
-    biases: &Vec<Array<f64, Dim<[usize; 1]>>>,
-    layers: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
-    zs: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
-) -> Array<f64, Dim<[usize; 1]>> {
+    input: &Matrix1D,
+    weights: &[Matrix2D],
+    biases: &[Matrix1D],
+    layers: &mut Vec<Matrix1D>,
+    zs: &mut Vec<Matrix1D>,
+) -> Matrix1D {
     layers.push(input.clone());
     zs.push(Array::zeros(input.raw_dim()));
-    let mut layer: Array<f64, Dim<[usize; 1]>> = input.clone();
+    let mut layer: Matrix1D = input.clone();
     for (i, weight) in weights.iter().enumerate() {
         layer = layer.dot(weight).add(&biases[i]);
         zs.push(layer.clone());
-        let layer_sigmoid = layer.mapv(|x: f64| sigmoid(x));
+        let layer_sigmoid = layer.mapv(sigmoid);
         layers.push(layer_sigmoid.clone());
         layer = layer_sigmoid;
     }
@@ -146,12 +150,12 @@ fn forward_propagation(
 }
 
 fn back_propagation(
-    weights: &mut Vec<Array<f64, Dim<[usize; 2]>>>,
-    biases: &mut Vec<Array<f64, Dim<[usize; 1]>>>,
-    layers: &Vec<Array<f64, Dim<[usize; 1]>>>,
-    zs: &Vec<Array<f64, Dim<[usize; 1]>>>,
-    network_desired_output: &Array<f64, Dim<[usize; 1]>>,
-    error: &mut Array<f64, Dim<[usize; 1]>>,
+    weights: &mut [Matrix2D],
+    biases: &mut [Matrix1D],
+    layers: &[Matrix1D],
+    zs: &[Matrix1D],
+    network_desired_output: &Matrix1D,
+    error: &mut Matrix1D,
 ) {
     let mut delta = &layers[layers.len()-1] - network_desired_output;
 
@@ -168,9 +172,9 @@ fn back_propagation(
             }
             error[i] = sum;
 
-            let mut weight_gradient_part: Array<f64, Dim<[usize; 2]>> =
+            let mut weight_gradient_part: Matrix2D =
                 Array::zeros(weight.raw_dim());
-            let mut bias_gradient_part: Array<f64, Dim<[usize; 1]>> =
+            let mut bias_gradient_part: Matrix1D =
                 Array::zeros(biases[i - 1].raw_dim());
 
                 for (j, mut matrix_row) in weight_gradient_part.outer_iter_mut().enumerate() {
@@ -183,9 +187,9 @@ fn back_propagation(
                     *matrix_element += LEARNING_RATE * delta[j] * sigmoid_derivative(z[j]);
                 }
 
-            weight = weight - &weight_gradient_part;
+            weight -= &weight_gradient_part;
 
-            let mut next_iteration_delta: Array<f64, Dim<[usize; 1]>> =
+            let mut next_iteration_delta: Matrix1D =
                 Array::zeros(previous_layer.raw_dim());
 
             for (j, matrix_element) in next_iteration_delta.iter_mut().enumerate() {
