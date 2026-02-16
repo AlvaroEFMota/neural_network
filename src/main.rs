@@ -105,7 +105,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut zs: Vec<Matrix1D> = vec![];
         let neural_network_output =
             forward_propagation(input, &weights, &biases, &mut layers, &mut zs);
-        println!("Forward propagation result -> {:?}", neural_network_output);
+        //println!("Forward propagation result -> {:?}", neural_network_output);
 
         let mut hit = true;
         for (i, elem) in neural_network_output.iter().enumerate() {
