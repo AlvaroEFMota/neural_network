@@ -144,28 +144,30 @@ impl ApplicationHandler for App {
                 self.last_frame = now;
 
                 //update
-                
+                //Draw planet
                 if let Some(pixels) = self.pixels.as_mut() {
-                    let frame = pixels.frame_mut(); //[R, G, B, A, R, G, B, A, R, G, B, A, ...]
+                    let frame = pixels.frame_mut(); // [R, G, B, A, R, G, B, A, R, G, B, A, ...]
                     frame.fill(0);
 
                     let planet_x = self.planet.position.x as usize;
                     let planet_y = self.planet.position.y as usize;
 
-                    for i in 0..60 {
-                        let angle_degree = (i * 6) as f64;
-                        let angle_rad = angle_degree as f64 * (2.0 * PI / 360.0);
-                        let mut planet_edge_x = (angle_rad.cos() * 20.0);
-                        let mut planet_edge_y = (angle_rad.sin() * 20.0); 
+                    for k in 0..20 {
+                        for i in 0..60 {
+                            let angle_degree = (i * 6) as f64;
+                            let angle_rad = angle_degree as f64 * (2.0 * PI / 360.0);
+                            let mut planet_edge_x = (angle_rad.cos() * k as f64);
+                            let mut planet_edge_y = (angle_rad.sin() * k as f64); 
 
-                        planet_edge_x += planet_x as f64;
-                        planet_edge_y += planet_y as f64;
-                        let index = (planet_edge_y as usize * 512 + planet_edge_x as usize) * 4;
-                        if index + 3 < frame.len() {
-                            frame[index] = 255; // R
-                            frame[index + 1] = 255; // G
-                            frame[index + 2] = 255; // B
-                            frame[index + 3] = 255; // A
+                            planet_edge_x += planet_x as f64;
+                            planet_edge_y += planet_y as f64;
+                            let index = (planet_edge_y as usize * 512 + planet_edge_x as usize) * 4;
+                            if index + 3 < frame.len() {
+                                frame[index] = 255; // R
+                                frame[index + 1] = 0; // G
+                                frame[index + 2] = (12.75 * (20 - k) as f64) as u8; // B
+                                frame[index + 3] = 20; // A
+                            }
                         }
                     }
 
@@ -191,9 +193,9 @@ impl ApplicationHandler for App {
                         meteor_edge_y += meteor_y as f64;
                         let index = (meteor_edge_y as usize * 512 + meteor_edge_x as usize) * 4;
                         if index + 3 < frame.len() {
-                            frame[index] = 255; // R
+                            frame[index] = 0; // R
                             frame[index + 1] = 255; // G
-                            frame[index + 2] = 255; // B
+                            frame[index + 2] = 0; // B
                             frame[index + 3] = 255; // A
                         }
                     }

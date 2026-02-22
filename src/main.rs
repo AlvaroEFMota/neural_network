@@ -52,9 +52,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     shuffle(&mut all_data[..300]);
     let training_data: &[(Matrix1D, Matrix1D)] = &all_data[..300];
     let validation_data: &[(Matrix1D, Matrix1D)] = &all_data[300..];
-    let network = vec![4, 4, 4, 1];
 
     // The Neural Network
+    let network = vec![4, 4, 4, 1];
     let mut weights: Vec<Matrix2D> = vec![];
     let mut biases: Vec<Matrix1D> = vec![];
     let mut error: Matrix1D = Array::zeros(network.len());
@@ -125,6 +125,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "hits percent = {}%",
         (hit_count as f32 / validation_data.len() as f32) * 100.0
     );
+
+
     Ok(())
 }
 
