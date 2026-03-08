@@ -8,6 +8,9 @@ use winit::{
     window::{Window, WindowId},
 };
 use std::sync::Arc;
+use std::fs;
+use std::path::PathBuf;
+use rand::prelude::*;
 
 const SCALE: u32 = 10;
 
@@ -117,24 +120,76 @@ impl ApplicationHandler for App {
     }
 }
 
+struct ImageLocation {
+    path: PathBuf,
+    value: usize,
+}
+struct ImageDataSet {
+   data_set: Vec<ImageLocation>,  
+}
+
+impl ImageDataSet {
+    fn shuffle(&mut self) {
+        let mut rng = rand::thread_rng();
+        let len = self.data_set.len();
+        for i in 0..len - 1 {
+            self.data_set.swap(i, rng.gen::<usize>() % len);
+        }
+    }
+
+}
+
+fn load_image_dataset() -> ImageDataSet {
+    let mut image_dataset = ImageDataSet {
+        data_set: Vec::<ImageLocation>::new(),
+    };
+
+    let mnist_train_path = String::from("C:\\Users\\Shaka\\Downloads\\archive\\mnist_png\\train");
+    let mnist_folder = fs::read_dir(mnist_train_path).unwrap();
+    for entry in mnist_folder {
+        let entry = entry.unwrap();
+        let folder_name= entry.file_name().into_string().unwrap().parse::<usize>().unwrap();
+        let folder_path = entry.path();
+        
+        println!("{:?}", folder_path);
+        let data_folder = fs::read_dir(folder_path).unwrap(); 
+        for image_file in data_folder {
+           let image_file = image_file.unwrap(); 
+           let image_location = ImageLocation {
+            path: image_file.path(),
+            value: folder_name,
+           };
+           image_dataset.data_set.push(image_location);
+        }
+    }
+
+    image_dataset
+}
+
+fn get_image_from_location(location: &ImageLocation) -> Result<Vec<u8>, Box<dyn Error>> {
+    Ok(image::open(&location.path)?.to_rgb8().to_vec())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
 
+    //feed the ImageDataSet
+    let mut image_dataset = load_image_dataset();
+    image_dataset.shuffle();
+    for entry in image_dataset.data_set {
+        println!("{:?},  {:?}", entry.path, entry.value);
+    }
 
-    //let img = ImageReader::open("C:\\Users\\Shaka\\Downloads\\archive\\mnist_png\\test\\4\\4.png")?.decode()?;
-    //println!("{:?}", img.dimensions());
-    //let (img_w, img_h) = img.dimensions();
+    //CNN training
+    // load dataset
+    
 
-    let event_loop = EventLoop::new()?;
-    let mut app = App::new("C:\\Users\\Shaka\\Downloads\\archive\\mnist_png\\test\\4\\4.png")?;
-    event_loop.run_app(&mut app)?;
+    //CNN test
+
+    //Plot a demonstration
+
+    //let event_loop = EventLoop::new()?;
+    //let mut app = App::new("C:\\Users\\Shaka\\Downloads\\archive\\mnist_png\\test\\4\\4.png")?;
+    //event_loop.run_app(&mut app)?;
 
     Ok(())
-
-    /*for i in 0..27 {
-        for j in 0..27 {
-            let pixel = img.get_pixel(i, j);
-            println!("{:?} ", pixel); 
-        }
-    }*/
-
 }
